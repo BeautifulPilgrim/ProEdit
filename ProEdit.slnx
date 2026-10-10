@@ -71,6 +71,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/ProEdit.Collaboration.Tests/ProEdit.Collaboration.Tests.csproj" />
     <Project Path="tests/ProEdit.Controls.Skia.Tests/ProEdit.Controls.Skia.Tests.csproj" />
+    <Project Path="tests/ProEdit.Controls.Skia.Uno.Tests/ProEdit.Controls.Skia.Uno.Tests.csproj" />
     <Project Path="tests/ProEdit.Documents.Data.Tests/ProEdit.Documents.Data.Tests.csproj" />
     <Project Path="tests/ProEdit.FlowDocument.Tests/ProEdit.FlowDocument.Tests.csproj" />
     <Project Path="tests/ProEdit.FlowDocument.IO.Tests/ProEdit.FlowDocument.IO.Tests.csproj" />

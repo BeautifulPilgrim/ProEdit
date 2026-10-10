@@ -15,6 +15,6 @@ public static class Program
         builder = builder.UseMacOS();
 #endif
 
-        builder.Build().Run();
+        builder.UseWin32().Build().Run();
     }
 }

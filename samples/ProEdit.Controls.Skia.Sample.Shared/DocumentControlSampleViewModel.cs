@@ -1,34 +1,19 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using ProEdit.Controls.Skia;
 using ProEdit.Documents;
 using ProEdit.Editing;
 using ProEdit.Layout;
 using ProEdit.Primitives;
-using ReactiveUI;
 
 namespace ProEdit.Controls.Skia.Sample.Shared;
 
 /// <summary>
 /// Shared sample state used by the Avalonia, Uno, and MAUI document control samples.
 /// </summary>
-public sealed class DocumentControlSampleViewModel : ReactiveObject
+public sealed partial class DocumentControlSampleViewModel : ObservableObject
 {
-    private Document _viewerDocument;
-    private Document _editorDocument;
-    private double _viewerZoom = 0.9d;
-    private double _editorZoom = 1d;
-    private ProEditDocumentZoomMode _viewerZoomMode = ProEditDocumentZoomMode.PageWidth;
-    private ProEditDocumentZoomMode _editorZoomMode = ProEditDocumentZoomMode.Custom;
     private int _multiplePagesPerRow = 2;
-    private bool _showInvisibles;
-    private bool _showLayout = true;
-    private bool _showGridlines;
-    private bool _usePagination = true;
-    private bool _isPanEnabled = true;
-    private bool _isEditorReadOnly;
-    private PageFlowDirection _pageFlow = PageFlowDirection.Vertical;
-    private EditorViewMode _viewMode = EditorViewMode.PrintLayout;
-    private string _status = "Ready. Type in the editor pane, use Ctrl+wheel to zoom, and drag with the middle mouse button to pan.";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DocumentControlSampleViewModel"/> class.
@@ -36,225 +21,143 @@ public sealed class DocumentControlSampleViewModel : ReactiveObject
     public DocumentControlSampleViewModel()
     {
         var document = CreateSampleDocument();
-        _viewerDocument = DocumentClone.Clone(document);
-        _editorDocument = DocumentClone.Clone(document);
+        EditorDocument = DocumentClone.Clone(document);
+        ViewerDocument = EditorDocument;
 
-        ResetDocumentsCommand = ReactiveCommand.Create(ResetDocuments);
-        ZoomDefaultCommand = ReactiveCommand.Create(ZoomDefault);
-        ZoomPageWidthCommand = ReactiveCommand.Create(ZoomPageWidth);
-        ZoomWholePageCommand = ReactiveCommand.Create(ZoomWholePage);
-        ZoomMultiplePagesCommand = ReactiveCommand.Create(ZoomMultiplePages);
-        ZoomInCommand = ReactiveCommand.Create(ZoomIn);
-        ZoomOutCommand = ReactiveCommand.Create(ZoomOut);
-        PrintLayoutCommand = ReactiveCommand.Create(UsePrintLayout);
-        ReadModeCommand = ReactiveCommand.Create(UseReadMode);
-        WebLayoutCommand = ReactiveCommand.Create(UseWebLayout);
+        ViewerZoom = 0.9d;
+        EditorZoom = 1d;
+        ViewerZoomMode = ProEditDocumentZoomMode.PageWidth;
+        EditorZoomMode = ProEditDocumentZoomMode.Custom;
+        MultiplePagesPerRow = 2;
+        ShowInvisibles = false;
+        ShowLayout = true;
+        ShowGridlines = false;
+        UsePagination = true;
+        IsPanEnabled = true;
+        IsEditorReadOnly = false;
+        PageFlow = PageFlowDirection.Vertical;
+        ViewMode = EditorViewMode.PrintLayout;
+        Status = "Ready. Type in the editor pane, use Ctrl+wheel to zoom, and drag with the middle mouse button to pan.";
     }
 
     /// <summary>
     /// Gets the read-only document shown by viewer controls.
     /// </summary>
-    public Document ViewerDocument
-    {
-        get => _viewerDocument;
-        private set => this.RaiseAndSetIfChanged(ref _viewerDocument, value);
-    }
+    [ObservableProperty]
+    public partial Document ViewerDocument { get; private set; }
 
     /// <summary>
     /// Gets the editable document shown by editor controls.
     /// </summary>
-    public Document EditorDocument
-    {
-        get => _editorDocument;
-        private set => this.RaiseAndSetIfChanged(ref _editorDocument, value);
-    }
+    [ObservableProperty]
+    public partial Document EditorDocument { get; private set; }
 
     /// <summary>
     /// Gets or sets the viewer zoom factor.
     /// </summary>
-    public double ViewerZoom
-    {
-        get => _viewerZoom;
-        set => this.RaiseAndSetIfChanged(ref _viewerZoom, value);
-    }
+    [ObservableProperty]
+    public partial double ViewerZoom { get; set; }
 
     /// <summary>
     /// Gets or sets the editor zoom factor.
     /// </summary>
-    public double EditorZoom
-    {
-        get => _editorZoom;
-        set => this.RaiseAndSetIfChanged(ref _editorZoom, value);
-    }
+    [ObservableProperty]
+    public partial double EditorZoom { get; set; }
 
     /// <summary>
     /// Gets or sets the viewer zoom mode.
     /// </summary>
-    public ProEditDocumentZoomMode ViewerZoomMode
-    {
-        get => _viewerZoomMode;
-        set => this.RaiseAndSetIfChanged(ref _viewerZoomMode, value);
-    }
+    [ObservableProperty]
+    public partial ProEditDocumentZoomMode ViewerZoomMode { get; set; }
 
     /// <summary>
     /// Gets or sets the editor zoom mode.
     /// </summary>
-    public ProEditDocumentZoomMode EditorZoomMode
-    {
-        get => _editorZoomMode;
-        set => this.RaiseAndSetIfChanged(ref _editorZoomMode, value);
-    }
+    [ObservableProperty]
+    public partial ProEditDocumentZoomMode EditorZoomMode { get; set; }
 
     /// <summary>
-    /// Gets or sets the page count used by multiple-pages zoom.
+    /// Gets or sets the page count used by multiple-pages zoom. Values less than 1 are clamped to 1.
     /// </summary>
     public int MultiplePagesPerRow
     {
         get => _multiplePagesPerRow;
-        set => this.RaiseAndSetIfChanged(ref _multiplePagesPerRow, Math.Max(1, value));
+        set => SetProperty(ref _multiplePagesPerRow, Math.Max(1, value));
     }
 
     /// <summary>
     /// Gets or sets a value indicating whether invisible characters are shown.
     /// </summary>
-    public bool ShowInvisibles
-    {
-        get => _showInvisibles;
-        set => this.RaiseAndSetIfChanged(ref _showInvisibles, value);
-    }
+    [ObservableProperty]
+    public partial bool ShowInvisibles { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether layout guides are shown.
     /// </summary>
-    public bool ShowLayout
-    {
-        get => _showLayout;
-        set => this.RaiseAndSetIfChanged(ref _showLayout, value);
-    }
+    [ObservableProperty]
+    public partial bool ShowLayout { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether page gridlines are shown.
     /// </summary>
-    public bool ShowGridlines
-    {
-        get => _showGridlines;
-        set => this.RaiseAndSetIfChanged(ref _showGridlines, value);
-    }
+    [ObservableProperty]
+    public partial bool ShowGridlines { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether pagination is enabled.
     /// </summary>
-    public bool UsePagination
-    {
-        get => _usePagination;
-        set => this.RaiseAndSetIfChanged(ref _usePagination, value);
-    }
+    [ObservableProperty]
+    public partial bool UsePagination { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether middle-button pan is enabled.
     /// </summary>
-    public bool IsPanEnabled
-    {
-        get => _isPanEnabled;
-        set => this.RaiseAndSetIfChanged(ref _isPanEnabled, value);
-    }
+    [ObservableProperty]
+    public partial bool IsPanEnabled { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the editor sample is read-only.
     /// </summary>
-    public bool IsEditorReadOnly
-    {
-        get => _isEditorReadOnly;
-        set => this.RaiseAndSetIfChanged(ref _isEditorReadOnly, value);
-    }
+    [ObservableProperty]
+    public partial bool IsEditorReadOnly { get; set; }
 
     /// <summary>
     /// Gets or sets the page flow direction.
     /// </summary>
-    public PageFlowDirection PageFlow
-    {
-        get => _pageFlow;
-        set => this.RaiseAndSetIfChanged(ref _pageFlow, value);
-    }
+    [ObservableProperty]
+    public partial PageFlowDirection PageFlow { get; set; }
 
     /// <summary>
     /// Gets or sets the logical editor view mode.
     /// </summary>
-    public EditorViewMode ViewMode
-    {
-        get => _viewMode;
-        set => this.RaiseAndSetIfChanged(ref _viewMode, value);
-    }
+    [ObservableProperty]
+    public partial EditorViewMode ViewMode { get; set; }
 
     /// <summary>
     /// Gets the current sample status text.
     /// </summary>
-    public string Status
-    {
-        get => _status;
-        private set => this.RaiseAndSetIfChanged(ref _status, value);
-    }
+    [ObservableProperty]
+    public partial string Status { get; private set; }
 
     /// <summary>
-    /// Gets a command that resets both sample documents.
+    /// Resets both sample documents.
     /// </summary>
-    public ICommand ResetDocumentsCommand { get; }
-
-    /// <summary>
-    /// Gets a command that resets zoom to 100%.
-    /// </summary>
-    public ICommand ZoomDefaultCommand { get; }
-
-    /// <summary>
-    /// Gets a command that fits the page width.
-    /// </summary>
-    public ICommand ZoomPageWidthCommand { get; }
-
-    /// <summary>
-    /// Gets a command that fits the whole page.
-    /// </summary>
-    public ICommand ZoomWholePageCommand { get; }
-
-    /// <summary>
-    /// Gets a command that fits multiple pages.
-    /// </summary>
-    public ICommand ZoomMultiplePagesCommand { get; }
-
-    /// <summary>
-    /// Gets a command that increases explicit zoom.
-    /// </summary>
-    public ICommand ZoomInCommand { get; }
-
-    /// <summary>
-    /// Gets a command that decreases explicit zoom.
-    /// </summary>
-    public ICommand ZoomOutCommand { get; }
-
-    /// <summary>
-    /// Gets a command that switches to print layout.
-    /// </summary>
-    public ICommand PrintLayoutCommand { get; }
-
-    /// <summary>
-    /// Gets a command that switches to read mode.
-    /// </summary>
-    public ICommand ReadModeCommand { get; }
-
-    /// <summary>
-    /// Gets a command that switches to web layout.
-    /// </summary>
-    public ICommand WebLayoutCommand { get; }
-
+    [RelayCommand]
     private void ResetDocuments()
     {
         var document = CreateSampleDocument();
-        ViewerDocument = DocumentClone.Clone(document);
         EditorDocument = DocumentClone.Clone(document);
+        ViewerDocument = EditorDocument;
+
         IsEditorReadOnly = false;
-        UsePrintLayout();
+        PrintLayout();
         Status = "Sample documents were reset.";
     }
 
+    /// <summary>
+    /// Resets zoom to 100%.
+    /// </summary>
+    [RelayCommand]
     private void ZoomDefault()
     {
         ViewerZoomMode = ProEditDocumentZoomMode.Custom;
@@ -264,6 +167,10 @@ public sealed class DocumentControlSampleViewModel : ReactiveObject
         Status = "Zoom reset to 100%.";
     }
 
+    /// <summary>
+    /// Fits the page width.
+    /// </summary>
+    [RelayCommand]
     private void ZoomPageWidth()
     {
         ViewerZoomMode = ProEditDocumentZoomMode.PageWidth;
@@ -271,6 +178,10 @@ public sealed class DocumentControlSampleViewModel : ReactiveObject
         Status = "Zoom mode: page width.";
     }
 
+    /// <summary>
+    /// Fits the whole page.
+    /// </summary>
+    [RelayCommand]
     private void ZoomWholePage()
     {
         ViewerZoomMode = ProEditDocumentZoomMode.WholePage;
@@ -278,6 +189,10 @@ public sealed class DocumentControlSampleViewModel : ReactiveObject
         Status = "Zoom mode: whole page.";
     }
 
+    /// <summary>
+    /// Fits multiple pages.
+    /// </summary>
+    [RelayCommand]
     private void ZoomMultiplePages()
     {
         MultiplePagesPerRow = 2;
@@ -286,6 +201,10 @@ public sealed class DocumentControlSampleViewModel : ReactiveObject
         Status = "Zoom mode: multiple pages.";
     }
 
+    /// <summary>
+    /// Increases explicit zoom.
+    /// </summary>
+    [RelayCommand]
     private void ZoomIn()
     {
         ViewerZoomMode = ProEditDocumentZoomMode.Custom;
@@ -295,6 +214,10 @@ public sealed class DocumentControlSampleViewModel : ReactiveObject
         Status = $"Zoom: {EditorZoom:P0}.";
     }
 
+    /// <summary>
+    /// Decreases explicit zoom.
+    /// </summary>
+    [RelayCommand]
     private void ZoomOut()
     {
         ViewerZoomMode = ProEditDocumentZoomMode.Custom;
@@ -304,7 +227,11 @@ public sealed class DocumentControlSampleViewModel : ReactiveObject
         Status = $"Zoom: {EditorZoom:P0}.";
     }
 
-    private void UsePrintLayout()
+    /// <summary>
+    /// Switches to print layout.
+    /// </summary>
+    [RelayCommand]
+    private void PrintLayout()
     {
         ViewMode = EditorViewMode.PrintLayout;
         UsePagination = true;
@@ -315,7 +242,11 @@ public sealed class DocumentControlSampleViewModel : ReactiveObject
         Status = "View mode: print layout.";
     }
 
-    private void UseReadMode()
+    /// <summary>
+    /// Switches to read mode.
+    /// </summary>
+    [RelayCommand]
+    private void ReadMode()
     {
         ViewMode = EditorViewMode.ReadMode;
         UsePagination = true;
@@ -326,7 +257,11 @@ public sealed class DocumentControlSampleViewModel : ReactiveObject
         Status = "View mode: read mode.";
     }
 
-    private void UseWebLayout()
+    /// <summary>
+    /// Switches to web layout.
+    /// </summary>
+    [RelayCommand]
+    private void WebLayout()
     {
         ViewMode = EditorViewMode.WebLayout;
         UsePagination = false;

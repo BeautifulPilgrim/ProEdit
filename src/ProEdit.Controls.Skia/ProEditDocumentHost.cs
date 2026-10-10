@@ -561,6 +561,37 @@ public sealed class ProEditDocumentHost : IEditorViewOptionsService, IEditorZoom
     }
 
     /// <summary>
+    /// Adopts an externally owned editor session instead of creating a new one.
+    /// The adopting host shares the session's document, layout, and change notifications
+    /// with the owning host while keeping its own viewport, zoom, and scroll state.
+    /// The adopter does not own the session lifetime; session-level layout settings
+    /// such as pagination and page flow stay shared with the owning host.
+    /// </summary>
+    /// <param name="session">The session to adopt.</param>
+    public void LoadSession(IEditorMutableSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        if (ReferenceEquals(_session, session))
+        {
+            return;
+        }
+
+        _session.Changed -= OnSessionChanged;
+        _session = session;
+        ConfigureMeasurer(_session.Document);
+        _commandRouter = RegisterWordEditorServices();
+        _inputRouter = CreateInputRouter();
+        _session.Changed += OnSessionChanged;
+        _scrollX = 0f;
+        _scrollY = 0f;
+        UpdateLayoutForViewport();
+        UpdateExtent();
+        CoerceScroll();
+        OnChanged();
+        OnViewportChanged();
+    }
+
+    /// <summary>
     /// Updates the viewport size in screen units.
     /// </summary>
     /// <param name="width">The viewport width.</param>

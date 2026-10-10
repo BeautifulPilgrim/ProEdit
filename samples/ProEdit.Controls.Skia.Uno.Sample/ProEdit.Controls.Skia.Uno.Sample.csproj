@@ -28,6 +28,10 @@
     <PackageReference Include="Uno.WinUI.Runtime.Skia.MacOS" />
   </ItemGroup>
 
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('WINDOWS'))">
+    <PackageReference Include="Uno.WinUI.Runtime.Skia.Win32" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\ProEdit.Controls.Skia.Uno\ProEdit.Controls.Skia.Uno.csproj" />
     <ProjectReference Include="..\ProEdit.Controls.Skia.Sample.Shared\ProEdit.Controls.Skia.Sample.Shared.csproj" />

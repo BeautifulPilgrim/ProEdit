@@ -33,6 +33,27 @@ public abstract class ProEditDocumentControlBase : SKCanvasElement
             new PropertyMetadata(null, OnDocumentPropertyChanged));
 
     /// <summary>
+    /// Defines the <see cref="Session"/> property.
+    /// </summary>
+    public static readonly DependencyProperty SessionProperty =
+        DependencyProperty.Register(
+            nameof(Session),
+            typeof(IEditorMutableSession),
+            typeof(ProEditDocumentControlBase),
+            new PropertyMetadata(null, OnSessionPropertyChanged));
+
+    /// <summary>
+    /// Defines the <see cref="EditorSession"/> property. WinUI has no read-only
+    /// dependency property registration, so the property is exposed with a private setter.
+    /// </summary>
+    public static readonly DependencyProperty EditorSessionProperty =
+        DependencyProperty.Register(
+            nameof(EditorSession),
+            typeof(IEditorMutableSession),
+            typeof(ProEditDocumentControlBase),
+            new PropertyMetadata(null));
+
+    /// <summary>
     /// Defines the <see cref="Zoom"/> property.
     /// </summary>
     public static readonly DependencyProperty ZoomProperty =
@@ -265,6 +286,7 @@ public abstract class ProEditDocumentControlBase : SKCanvasElement
         _host.ViewportChanged += OnHostViewportChanged;
         _host.ViewOptionsChanged += OnHostViewOptionsChanged;
         ApplyPropertiesToHost();
+        SetValue(EditorSessionProperty, _host.EditorSession);
     }
 
     /// <summary>
@@ -279,6 +301,26 @@ public abstract class ProEditDocumentControlBase : SKCanvasElement
     {
         get => (Document?)GetValue(DocumentProperty);
         set => SetValue(DocumentProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the externally owned editor session to adopt. When set, the control
+    /// renders and edits through the shared session instead of hosting its own document.
+    /// </summary>
+    public IEditorMutableSession? Session
+    {
+        get => (IEditorMutableSession?)GetValue(SessionProperty);
+        set => SetValue(SessionProperty, value);
+    }
+
+    /// <summary>
+    /// Gets the editor session currently rendered by the control. Updated automatically
+    /// whenever the control loads or adopts a session; not intended to be set externally.
+    /// </summary>
+    public IEditorMutableSession? EditorSession
+    {
+        get => (IEditorMutableSession?)GetValue(EditorSessionProperty);
+        private set => SetValue(EditorSessionProperty, value);
     }
 
     /// <summary>
@@ -504,7 +546,36 @@ public abstract class ProEditDocumentControlBase : SKCanvasElement
             return;
         }
 
-        control._host.LoadDocument(e.NewValue as Document);
+        var newDocument = e.NewValue as Document;
+        if (newDocument is null || !ReferenceEquals(newDocument, control._host.EditorSession.Document))
+        {
+            control._host.LoadDocument(newDocument);
+        }
+
+        control.SetValue(EditorSessionProperty, control._host.EditorSession);
+        control.InvalidateMeasure();
+        control.InvalidateArrange();
+        control.Invalidate();
+    }
+
+    private static void OnSessionPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not ProEditDocumentControlBase control)
+        {
+            return;
+        }
+
+        if (e.NewValue is IEditorMutableSession session)
+        {
+            control._host.LoadSession(session);
+        }
+        else
+        {
+            control._host.LoadDocument(null);
+        }
+
+        control.SetValue(EditorSessionProperty, control._host.EditorSession);
+        control.SetValue(DocumentProperty, control._host.Document);
         control.InvalidateMeasure();
         control.InvalidateArrange();
         control.Invalidate();
